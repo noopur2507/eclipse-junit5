@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016 IBM Corporation and others.
+ * Copyright (c) 2016, 2017 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,7 +15,12 @@ import java.io.StringWriter;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.platform.commons.util.PreconditionViolationException;
+import org.eclipse.jdt.internal.junit.runner.FailedComparison;
+import org.eclipse.jdt.internal.junit.runner.IListensToTestExecutions;
+import org.eclipse.jdt.internal.junit.runner.ITestIdentifier;
+import org.eclipse.jdt.internal.junit.runner.MessageIds;
+import org.eclipse.jdt.internal.junit.runner.RemoteTestRunner;
+import org.eclipse.jdt.internal.junit.runner.TestReferenceFailure;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestExecutionResult.Status;
 import org.junit.platform.launcher.TestExecutionListener;
@@ -25,41 +30,28 @@ import org.opentest4j.AssertionFailedError;
 import org.opentest4j.MultipleFailuresError;
 import org.opentest4j.ValueWrapper;
 
-import org.eclipse.jdt.internal.junit.runner.FailedComparison;
-import org.eclipse.jdt.internal.junit.runner.IListensToTestExecutions;
-import org.eclipse.jdt.internal.junit.runner.ITestIdentifier;
-import org.eclipse.jdt.internal.junit.runner.MessageIds;
-import org.eclipse.jdt.internal.junit.runner.RemoteTestRunner;
-import org.eclipse.jdt.internal.junit.runner.TestReferenceFailure;
-
 public class JUnit5TestListener implements TestExecutionListener {
 
 	private final IListensToTestExecutions fNotified;
 
 	private TestPlan fTestPlan;
 
-	public JUnit5TestListener(IListensToTestExecutions notified, TestPlan testPlan) {
+	public JUnit5TestListener(IListensToTestExecutions notified) {
 		fNotified= notified;
+	}
+
+	@Override
+	public void testPlanExecutionStarted(TestPlan testPlan) {
 		fTestPlan= testPlan;
 	}
 
-	private boolean skipNotification(TestIdentifier testIdentifier) {
-		if (!testIdentifier.getParentId().isPresent()) {
-			return true;
-		}
-		try {
-			fTestPlan.getTestIdentifier(testIdentifier.getParentId().get());
-		} catch (PreconditionViolationException e) {
-			return true;
-		}
-		return false;
+	@Override
+	public void testPlanExecutionFinished(TestPlan testPlan) {
+		fTestPlan= null;
 	}
 
 	@Override
 	public void executionStarted(TestIdentifier testIdentifier) {
-		if (skipNotification(testIdentifier)) {
-			return;
-		}
 		if (testIdentifier.isTest()) {
 			fNotified.notifyTestStarted(getIdentifier(testIdentifier, false, false));
 		}
@@ -67,10 +59,6 @@ public class JUnit5TestListener implements TestExecutionListener {
 
 	@Override
 	public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
-		if (skipNotification(testIdentifier)) {
-			return;
-		}
-		
 		Status result= testExecutionResult.getStatus();
 		if (testIdentifier.isTest()) {
 			if (result != Status.SUCCESSFUL) {
@@ -152,10 +140,7 @@ public class JUnit5TestListener implements TestExecutionListener {
 
 	@Override
 	public void executionSkipped(TestIdentifier testIdentifier, String reason) {
-		if (skipNotification(testIdentifier)) {
-			return;
-		}
-		if (testIdentifier.isContainer()) {
+		if (testIdentifier.isContainer() && fTestPlan != null) {
 			fTestPlan.getDescendants(testIdentifier).stream().filter(t -> t.isTest()).forEachOrdered(t -> notifySkipped(t));
 		} else {
 			notifySkipped(testIdentifier);
@@ -172,12 +157,9 @@ public class JUnit5TestListener implements TestExecutionListener {
 
 	@Override
 	public void dynamicTestRegistered(TestIdentifier testIdentifier) {
-		if (skipNotification(testIdentifier)) {
-			return;
-		}
-		if (testIdentifier.isTest()) {
+		if (testIdentifier.isTest() && fTestPlan != null) {
 			JUnit5Identifier dynamicTestIdentifier= new JUnit5Identifier(testIdentifier);
-			RemoteTestRunner.fgTestRunServer.visitTreeEntry(dynamicTestIdentifier, false, 1, false, true, JUnit5TestReference.getParentId(testIdentifier, fTestPlan));
+			RemoteTestRunner.fgTestRunServer.visitTreeEntry(dynamicTestIdentifier, false, 1, true, JUnit5TestReference.getParentId(testIdentifier, fTestPlan));
 		}
 	}
 

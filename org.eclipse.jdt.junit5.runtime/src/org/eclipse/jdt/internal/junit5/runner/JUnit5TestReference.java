@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016 IBM Corporation and others.
+ * Copyright (c) 2016, 2017 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -33,6 +33,8 @@ public class JUnit5TestReference implements ITestReference {
 
 	private TestPlan fTestPlan;
 
+	private static JUnit5TestListener fgTestExecutionListener;
+
 	public JUnit5TestReference(LauncherDiscoveryRequest request, Launcher launcher) {
 		fRequest= request;
 		fLauncher= launcher;
@@ -57,25 +59,14 @@ public class JUnit5TestReference implements ITestReference {
 		JUnit5Identifier identifier= new JUnit5Identifier(testIdentifier);
 		String parentId= getParentId(testIdentifier, fTestPlan);
 		if (testIdentifier.isTest()) {
-			notified.visitTreeEntry(identifier, false, 1, false, false, parentId);
+			notified.visitTreeEntry(identifier, false, 1, false, parentId);
 		} else {
 			Set<TestIdentifier> children= fTestPlan.getChildren(testIdentifier);
-			notified.visitTreeEntry(identifier, true, children.size(), isTestFactoryMethod(testIdentifier), false, parentId);
+			notified.visitTreeEntry(identifier, true, children.size(), false, parentId);
 			for (TestIdentifier child : children) {
 				sendTree(notified, child);
 			}
 		}
-	}
-
-	// TODO - JUnit5: replace with new JUnit API -
-	// https://github.com/junit-team/junit5/issues/508
-	private boolean isTestFactoryMethod(TestIdentifier testIdentifier) {
-		String uniqueId= testIdentifier.getUniqueId();
-		int index= uniqueId.lastIndexOf("/["); //$NON-NLS-1$
-		if (index != -1) {
-			return uniqueId.substring(index + 2).startsWith("test-factory"); //$NON-NLS-1$
-		}
-		return false;
 	}
 
 	/**
@@ -99,8 +90,10 @@ public class JUnit5TestReference implements ITestReference {
 
 	@Override
 	public void run(TestExecution execution) {
-		JUnit5TestListener listener= new JUnit5TestListener(execution.getListener(), fTestPlan);
-		fLauncher.registerTestExecutionListeners(listener);
+		if (fgTestExecutionListener == null) {
+			fgTestExecutionListener = new JUnit5TestListener(execution.getListener());
+			fLauncher.registerTestExecutionListeners(fgTestExecutionListener);
+		}
 
 		fLauncher.execute(fRequest);
 	}
