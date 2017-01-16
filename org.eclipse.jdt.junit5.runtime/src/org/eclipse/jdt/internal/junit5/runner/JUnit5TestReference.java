@@ -24,6 +24,7 @@ import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
+import org.junit.platform.launcher.core.LauncherFactory;
 
 public class JUnit5TestReference implements ITestReference {
 
@@ -33,11 +34,9 @@ public class JUnit5TestReference implements ITestReference {
 
 	private TestPlan fTestPlan;
 
-	private static JUnit5TestListener fgTestExecutionListener;
-
-	public JUnit5TestReference(LauncherDiscoveryRequest request, Launcher launcher) {
+	public JUnit5TestReference(LauncherDiscoveryRequest request) {
 		fRequest= request;
-		fLauncher= launcher;
+		fLauncher= LauncherFactory.create();
 		fTestPlan= fLauncher.discover(fRequest);
 	}
 
@@ -90,11 +89,7 @@ public class JUnit5TestReference implements ITestReference {
 
 	@Override
 	public void run(TestExecution execution) {
-		if (fgTestExecutionListener == null) {
-			fgTestExecutionListener = new JUnit5TestListener(execution.getListener());
-			fLauncher.registerTestExecutionListeners(fgTestExecutionListener);
-		}
-
+		fLauncher.registerTestExecutionListeners(new JUnit5TestListener(execution.getListener()));
 		fLauncher.execute(fRequest);
 	}
 
@@ -109,17 +104,17 @@ public class JUnit5TestReference implements ITestReference {
 			return false;
 
 		JUnit5TestReference ref= (JUnit5TestReference) obj;
-		return (ref.fTestPlan.equals(fTestPlan));
+		return (ref.fRequest.equals(fRequest));
 	}
 
 	@Override
 	public int hashCode() {
-		return fTestPlan.hashCode();
+		return fRequest.hashCode();
 	}
 
 	@Override
 	public String toString() {
-		return fTestPlan.toString();
+		return fRequest.toString();
 	}
 
 }
