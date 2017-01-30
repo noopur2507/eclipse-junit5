@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016 IBM Corporation and others.
+ * Copyright (c) 2016, 2017 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,7 +12,6 @@
 package org.eclipse.jdt.internal.junit5.runner;
 
 import java.text.MessageFormat;
-import java.util.Optional;
 
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.support.descriptor.ClassSource;
@@ -32,22 +31,23 @@ public class JUnit5Identifier implements ITestIdentifier {
 
 	@Override
 	public String getName() {
-		Optional<TestSource> source= fTestIdentifier.getSource();
-		if (source.isPresent()) {
-			TestSource testSource= source.get();
-			if (testSource instanceof ClassSource) {
-				return ((ClassSource) testSource).getJavaClass().getName();
-			} else if (testSource instanceof MethodSource) {
-				MethodSource methodSource= (MethodSource) testSource;
-				String nameEntry= MessageFormat.format(MessageIds.TEST_IDENTIFIER_MESSAGE_FORMAT, methodSource.getMethodName(), methodSource.getClassName());
-				String parameterTypes= methodSource.getMethodParameterTypes();
-				if (!parameterTypes.isEmpty()) {
-					return nameEntry + ":" + parameterTypes; //$NON-NLS-1$					
-				}
-				return nameEntry;
-			}
+		return fTestIdentifier.getSource().map(this::getName).orElse(fTestIdentifier.getDisplayName());
+	}
+
+	private String getName(TestSource testSource) {
+		if (testSource instanceof ClassSource) {
+			return ((ClassSource) testSource).getJavaClass().getName();
 		}
-		return fTestIdentifier.getDisplayName();
+		if (testSource instanceof MethodSource) {
+			MethodSource methodSource= (MethodSource) testSource;
+			String nameEntry= MessageFormat.format(MessageIds.TEST_IDENTIFIER_MESSAGE_FORMAT, methodSource.getMethodName(), methodSource.getClassName());
+			String parameterTypes= methodSource.getMethodParameterTypes();
+			if (!parameterTypes.isEmpty()) {
+				nameEntry+= ":" + parameterTypes; //$NON-NLS-1$					
+			}
+			return nameEntry;
+		}
+		return null;
 	}
 
 	@Override

@@ -11,7 +11,6 @@
 
 package org.eclipse.jdt.internal.junit5.runner;
 
-import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.jdt.internal.junit.runner.ITestIdentifier;
@@ -75,16 +74,7 @@ public class JUnit5TestReference implements ITestReference {
 	 *         <code>"-1"</code>
 	 */
 	static String getParentId(TestIdentifier testIdentifier, TestPlan testPlan) {
-		Optional<TestIdentifier> parentOp= testPlan.getParent(testIdentifier);
-		String parentTestId;
-		if (parentOp.isPresent()) {
-			JUnit5Identifier parentTestIdentifier= new JUnit5Identifier(parentOp.get());
-			parentTestId= RemoteTestRunner.fgTestRunServer.getTestId(parentTestIdentifier);
-		} else {
-			// should not happen
-			parentTestId= "-1"; //$NON-NLS-1$ 
-		}
-		return parentTestId;
+		return testPlan.getParent(testIdentifier).map(parent -> RemoteTestRunner.fgTestRunServer.getTestId(new JUnit5Identifier(parent))).orElse("-1"); //$NON-NLS-1$
 	}
 
 	@Override

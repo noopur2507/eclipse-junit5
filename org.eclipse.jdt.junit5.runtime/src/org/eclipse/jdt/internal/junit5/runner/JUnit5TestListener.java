@@ -62,22 +62,17 @@ public class JUnit5TestListener implements TestExecutionListener {
 		Status result= testExecutionResult.getStatus();
 		if (testIdentifier.isTest()) {
 			if (result != Status.SUCCESSFUL) {
+				String trace= ""; //$NON-NLS-1$
+				FailedComparison comparison= null;
+				String status= MessageIds.TEST_FAILED;
+
 				boolean assumptionFailed= result == Status.ABORTED;
-
-				String trace;
-				FailedComparison comparison;
-				String status;
-
 				Optional<Throwable> throwableOp= testExecutionResult.getThrowable();
 				if (throwableOp.isPresent()) {
 					Throwable exception= throwableOp.get();
 					trace= getTrace(exception);
 					comparison= getFailedComparison(exception);
 					status= (assumptionFailed || exception instanceof AssertionError) ? MessageIds.TEST_FAILED : MessageIds.TEST_ERROR;
-				} else {
-					trace= ""; //$NON-NLS-1$
-					comparison= null;
-					status= MessageIds.TEST_FAILED;
 				}
 
 				ITestIdentifier identifier= getIdentifier(testIdentifier, false, assumptionFailed);
