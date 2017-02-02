@@ -11,5 +11,6 @@ Require-Bundle: org.eclipse.jdt.junit.runtime;bundle-version="3.4.600",
  org.junit.jupiter.engine;bundle-version="1.0.0",
  org.junit.vintage.engine;bundle-version="1.0.0",
  org.junit.platform;bundle-version="1.0.0",
+  org.junit.jupiter.migration.support;bundle-version="1.0.0",
  org.opentest4j;bundle-version="1.0.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
