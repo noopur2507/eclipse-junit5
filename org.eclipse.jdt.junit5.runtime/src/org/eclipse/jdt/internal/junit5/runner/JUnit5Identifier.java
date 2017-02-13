@@ -12,6 +12,7 @@
 package org.eclipse.jdt.internal.junit5.runner;
 
 import java.text.MessageFormat;
+import java.util.function.Function;
 
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.support.descriptor.ClassSource;
@@ -40,12 +41,7 @@ public class JUnit5Identifier implements ITestIdentifier {
 		}
 		if (testSource instanceof MethodSource) {
 			MethodSource methodSource= (MethodSource) testSource;
-			String nameEntry= MessageFormat.format(MessageIds.TEST_IDENTIFIER_MESSAGE_FORMAT, methodSource.getMethodName(), methodSource.getClassName());
-			String parameterTypes= methodSource.getMethodParameterTypes();
-			if (!parameterTypes.isEmpty()) {
-				nameEntry+= ":" + parameterTypes; //$NON-NLS-1$					
-			}
-			return nameEntry;
+			return MessageFormat.format(MessageIds.TEST_IDENTIFIER_MESSAGE_FORMAT, methodSource.getMethodName(), methodSource.getClassName());
 		}
 		return null;
 	}
@@ -67,5 +63,13 @@ public class JUnit5Identifier implements ITestIdentifier {
 
 		JUnit5Identifier id= (JUnit5Identifier) obj;
 		return fTestIdentifier.equals(id.fTestIdentifier);
+	}
+
+	@Override
+	public String getParameterTypes() {
+		Function<TestSource, String> getParameterTypes= (TestSource source) -> {
+			return source instanceof MethodSource ? ((MethodSource) source).getMethodParameterTypes() : null;
+		};
+		return fTestIdentifier.getSource().map(getParameterTypes).orElse(""); //$NON-NLS-1$
 	}
 }
