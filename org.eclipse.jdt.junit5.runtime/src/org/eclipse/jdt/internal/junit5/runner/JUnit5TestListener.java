@@ -113,8 +113,8 @@ public class JUnit5TestListener implements TestExecutionListener {
 			String expectedStr= ""; //$NON-NLS-1$
 			String actualStr= ""; //$NON-NLS-1$
 			String delimiter= "\n\n"; //$NON-NLS-1$
-			List<AssertionError> failures= ((MultipleFailuresError) exception).getFailures();
-			for (AssertionError assertionError : failures) {
+			List<Throwable> failures= ((MultipleFailuresError) exception).getFailures();
+			for (Throwable assertionError : failures) {
 				if (assertionError instanceof AssertionFailedError) {
 					AssertionFailedError assertionFailedError= (AssertionFailedError) assertionError;
 					ValueWrapper expected= assertionFailedError.getExpected();
