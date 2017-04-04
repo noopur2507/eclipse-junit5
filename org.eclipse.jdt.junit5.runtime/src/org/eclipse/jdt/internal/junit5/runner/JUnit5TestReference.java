@@ -13,17 +13,17 @@ package org.eclipse.jdt.internal.junit5.runner;
 
 import java.util.Set;
 
+import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.TestPlan;
+
 import org.eclipse.jdt.internal.junit.runner.ITestIdentifier;
 import org.eclipse.jdt.internal.junit.runner.ITestReference;
 import org.eclipse.jdt.internal.junit.runner.IVisitsTestTrees;
 import org.eclipse.jdt.internal.junit.runner.RemoteTestRunner;
 import org.eclipse.jdt.internal.junit.runner.TestExecution;
 import org.eclipse.jdt.internal.junit.runner.TestIdMap;
-import org.junit.platform.launcher.Launcher;
-import org.junit.platform.launcher.LauncherDiscoveryRequest;
-import org.junit.platform.launcher.TestIdentifier;
-import org.junit.platform.launcher.TestPlan;
-import org.junit.platform.launcher.core.LauncherFactory;
 
 public class JUnit5TestReference implements ITestReference {
 
@@ -33,9 +33,9 @@ public class JUnit5TestReference implements ITestReference {
 
 	private TestPlan fTestPlan;
 
-	public JUnit5TestReference(LauncherDiscoveryRequest request) {
+	public JUnit5TestReference(LauncherDiscoveryRequest request, Launcher launcher) {
 		fRequest= request;
-		fLauncher= LauncherFactory.create();
+		fLauncher= launcher;
 		fTestPlan= fLauncher.discover(fRequest);
 	}
 
@@ -79,8 +79,7 @@ public class JUnit5TestReference implements ITestReference {
 
 	@Override
 	public void run(TestExecution execution) {
-		fLauncher.registerTestExecutionListeners(new JUnit5TestListener(execution.getListener()));
-		fLauncher.execute(fRequest);
+		fLauncher.execute(fRequest, new JUnit5TestListener(execution.getListener()));
 	}
 
 	@Override

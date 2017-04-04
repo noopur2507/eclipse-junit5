@@ -1,6 +1,5 @@
 /*******************************************************************************
  * Copyright (c) 2016, 2017 IBM Corporation and others.
-
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,15 +10,20 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.junit5.runner;
 
+import org.junit.platform.engine.discovery.ClassNameFilter;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+
 import org.eclipse.jdt.internal.junit.runner.ITestLoader;
 import org.eclipse.jdt.internal.junit.runner.ITestReference;
 import org.eclipse.jdt.internal.junit.runner.RemoteTestRunner;
-import org.junit.platform.engine.discovery.ClassNameFilter;
-import org.junit.platform.engine.discovery.DiscoverySelectors;
-import org.junit.platform.launcher.LauncherDiscoveryRequest;
-import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 
 public class JUnit5TestLoader implements ITestLoader {
+
+	private Launcher fLauncher= LauncherFactory.create();
 
 	@Override
 	public ITestReference[] loadTests(Class[] testClasses, String testName, String[] failureNames, String[] packages, RemoteTestRunner listener) {
@@ -52,12 +56,12 @@ public class JUnit5TestLoader implements ITestLoader {
 
 	private ITestReference createFilteredTest(Class<?> clazz, String testName) {
 		LauncherDiscoveryRequest request= LauncherDiscoveryRequestBuilder.request().selectors(DiscoverySelectors.selectMethod(clazz.getName() + "#" + testName)).build(); //$NON-NLS-1$
-		return new JUnit5TestReference(request);
+		return new JUnit5TestReference(request, fLauncher);
 	}
 
 	private ITestReference createUnfilteredTest(Class<?> clazz) {
 		LauncherDiscoveryRequest request= LauncherDiscoveryRequestBuilder.request().selectors(DiscoverySelectors.selectClass(clazz)).build();
-		return new JUnit5TestReference(request);
+		return new JUnit5TestReference(request, fLauncher);
 	}
 
 	private ITestReference createTest(String pkg) {
@@ -73,6 +77,6 @@ public class JUnit5TestLoader implements ITestLoader {
 				.filters(ClassNameFilter.includeClassNamePatterns(pattern))
 				.build();
 
-		return new JUnit5TestReference(request);
+		return new JUnit5TestReference(request, fLauncher);
 	}
 }
