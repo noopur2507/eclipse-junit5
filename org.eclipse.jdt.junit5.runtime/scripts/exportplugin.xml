@@ -4,7 +4,7 @@
 	<target name="init">
 		<tstamp/>
 		<property name="destdir"	value="../../plugin-export" />
-		<property name="plugin"		value="org.eclipse.jdt.junit4.runtime" />
+		<property name="plugin"		value="org.eclipse.jdt.junit5.runtime" />
 		<property name="qualifier" value="zzz${DSTAMP}-${TSTAMP}" />
 		
 		<!-- define property ${plugin_version} by reading version from MANIFEST.MF: -->
